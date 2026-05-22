@@ -38,13 +38,14 @@ Wait ~60 seconds. Vercel gives you a URL like `https://monthly-planner-yourname.
 
 ### 3. Open the app and configure Teamwork
 
-Open your Vercel URL. You'll see a Settings screen asking for two things:
+Open your Vercel URL. You'll see a Settings screen asking for three things:
 
 1. **Teamwork site** — your Teamwork hostname (e.g. `yourcompany.teamwork.com`), without the `https://`
 2. **Teamwork API key** — get this from Teamwork:
    - Click your avatar (top right in Teamwork) → **Edit my details**
    - Click **API & Mobile** on the left sidebar
    - Under **API Keys**, copy your existing key or click **Generate token**
+3. **Session password** — make one up. This encrypts your API key in this browser. You'll enter it every time you open the planner. **If you lose it, you'll have to start over** (paste a fresh API key).
 
 Click **Test connection** to check it works (should show your name in green). Then **Save & continue**.
 
@@ -58,7 +59,9 @@ That's it. Bookmark the URL. Use it monthly.
 
 1. Open the bookmarked URL
 2. Pick the source month (defaults to current month)
-3. Click **Load tasks** — pulls last month's tasks across every active project
+3. Click **Load** — a dialog asks where to pull tasks from:
+   - **Use [month] as template** — pulls last month's Teamwork tasks (the usual flow)
+   - **Import a spreadsheet** — upload CSV/Excel or paste a Google Sheets URL instead
 4. In the meeting: edit hours, assignees, add/remove tasks per client
 5. Click **Push to Teamwork** at the bottom — creates the tasks for next month
 
@@ -79,6 +82,7 @@ The grid edits save to your browser as you work, so a refresh won't lose progres
 - **Compare to previous month** — each client card shows the delta vs the month before source (green = down, amber = up >15%)
 - **Custom target month** — tick "Custom target" to plan a non-adjacent month
 - **Hide unselected** — quickly hide tasks you've already decided not to push
+- **Import from spreadsheet** — at Load time, pick "Import a spreadsheet" instead of loading from Teamwork. Supports CSV/Excel upload or Google Sheets URL. Auto-guesses your column mapping from header names, lets you fix anything that doesn't auto-match. Mapping is saved for next time.
 - **Recent pushes** — collapsible history with click-through to past results
 - **Double-push protection** — warns if you've already pushed to this target month
 
@@ -94,10 +98,11 @@ Every selected task with a name. Dates shift forward by one month from source.
 
 ## Privacy
 
-- Your Teamwork API key lives only in your browser's localStorage and the `x-tw-key` header on requests through your own `/api/proxy` endpoint
-- The proxy is a stateless Vercel Edge Function — see `web/api/proxy.ts` (35 lines, no logging, no storage)
-- No analytics, no telemetry, no cookies
-- If you don't trust the proxy code, read the source — it's tiny
+- **Your API key is encrypted at rest in your browser** using AES-GCM with a session password only you know. localStorage never holds your plaintext key.
+- The decrypted key lives in browser memory only during use — auto-clears after 30 mins of inactivity (or click "🔒 Lock" any time).
+- Each request to Teamwork flows through `/api/proxy` (a Vercel Edge Function) which forwards the call without logging the key. Source: `web/api/proxy.ts` (~85 lines).
+- If you lose your session password, you can't recover the saved key — just reset and paste a fresh one from Teamwork.
+- No analytics, no telemetry, no cookies, no third-party services.
 
 ---
 
